@@ -15,6 +15,8 @@ import { cn } from "@/lib/utils"
 import { RepostButton } from "./repost-button"
 import type { PostWithAuthor } from "@/lib/types"
 import { toggleLike } from "@/lib/actions/post"
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 function RelativeTime({ date }: { date: Date }) {
   const [relativeTime, setRelativeTime] = useState<string>('')
@@ -182,18 +184,24 @@ export function PostCard({ post, mode, isEmbedded }: PostCardProps) {
           </div>
         )}
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
         {post.repostPost ? (
           <>
             {mode === "HEADLINER" && (
               <p>{post.repostPost.headliner}</p>
             )}
             {mode === "SHORT" && (
-              <p>{post.repostPost.shortContent || post.repostPost.headliner}</p>
+              <div className="prose dark:prose-invert max-w-none">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {post.repostPost.shortContent || post.repostPost.headliner}
+                </ReactMarkdown>
+              </div>
             )}
             {mode === "FULL" && (
               <div className="prose dark:prose-invert max-w-none">
-                {post.repostPost.fullContent || post.repostPost.shortContent || post.repostPost.headliner}
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {post.repostPost.fullContent || post.repostPost.shortContent || post.repostPost.headliner}
+                </ReactMarkdown>
               </div>
             )}
           </>
@@ -203,11 +211,17 @@ export function PostCard({ post, mode, isEmbedded }: PostCardProps) {
               <p>{post.headliner}</p>
             )}
             {mode === "SHORT" && (
-              <p>{post.shortContent || post.headliner}</p>
+              <div className="prose dark:prose-invert max-w-none">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {post.shortContent || post.headliner}
+                </ReactMarkdown>
+              </div>
             )}
             {mode === "FULL" && (
               <div className="prose dark:prose-invert max-w-none">
-                {post.fullContent || post.shortContent || post.headliner}
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {post.fullContent || post.shortContent || post.headliner}
+                </ReactMarkdown>
               </div>
             )}
           </>
