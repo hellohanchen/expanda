@@ -13,6 +13,7 @@ import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { PencilLine, FileText, BookOpen, Wand2 } from "lucide-react"
 import { Label } from "@/components/ui/label"
+import MDEditor, { commands } from '@uiw/react-md-editor'
 
 type EditorMode = "post" | "comment" | "quote"
 
@@ -32,6 +33,34 @@ type FormData = {
 
 type DraftingMode = "headliner" | "short" | "full"
 
+// Add a helper function to strip markdown
+function stripMarkdown(text: string): string {
+  // Remove headers
+  text = text.replace(/#{1,6}\s/g, '')
+  // Remove bold/italic
+  text = text.replace(/[*_]{1,3}(.*?)[*_]{1,3}/g, '$1')
+  // Remove links
+  text = text.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+  // Remove images
+  text = text.replace(/!\[([^\]]+)\]\([^)]+\)/g, '$1')
+  // Remove code blocks and inline code
+  text = text.replace(/`{1,3}[^`]*`{1,3}/g, '')
+  // Remove blockquotes
+  text = text.replace(/^>\s/gm, '')
+  // Remove lists
+  text = text.replace(/^[-*+]\s/gm, '')
+  text = text.replace(/^\d+\.\s/gm, '')
+  // Remove horizontal rules
+  text = text.replace(/^[-*_]{3,}\s*$/gm, '')
+  // Remove HTML tags
+  text = text.replace(/<[^>]*>/g, '')
+  // Collapse multiple newlines
+  text = text.replace(/\n{2,}/g, '\n')
+  // Trim whitespace
+  text = text.trim()
+  return text
+}
+
 export function ContentEditor({ mode, targetId, onSuccess }: ContentEditorProps) {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -39,6 +68,7 @@ export function ContentEditor({ mode, targetId, onSuccess }: ContentEditorProps)
   const [draftingMode, setDraftingMode] = useState<DraftingMode>("headliner")
   const [showHeadliner, setShowHeadliner] = useState(false)
   const [showShortContent, setShowShortContent] = useState(false)
+  const [mdValue, setMdValue] = useState("")
 
   // Select the appropriate schema based on the mode
   const schema = {
@@ -65,23 +95,27 @@ export function ContentEditor({ mode, targetId, onSuccess }: ContentEditorProps)
   useEffect(() => {
     const contentLength = content?.length || 0
     
-    // Update drafting mode based on content length
+    // Hide both inputs when content is less than 50 characters
     if (contentLength <= 50) {
-      setDraftingMode("headliner")
       setShowHeadliner(false)
       setShowShortContent(false)
-    } else if (contentLength <= 280) {
-      setDraftingMode("short")
+      setDraftingMode("headliner")
+    } 
+    // Show only headliner when content is between 50 and 280 characters
+    else if (contentLength <= 280) {
       setShowHeadliner(true)
       setShowShortContent(false)
+      setDraftingMode("short")
       // Auto-populate headliner preview if not manually set
       if (!form.getValues("headliner")) {
         form.setValue("headliner", content.slice(0, 50))
       }
-    } else {
-      setDraftingMode("full")
+    } 
+    // Show both inputs when content is 280+ characters
+    else {
       setShowHeadliner(true)
       setShowShortContent(true)
+      setDraftingMode("full")
       // Auto-populate previews if not manually set
       if (!form.getValues("headliner")) {
         form.setValue("headliner", content.slice(0, 50))
@@ -91,6 +125,11 @@ export function ContentEditor({ mode, targetId, onSuccess }: ContentEditorProps)
       }
     }
   }, [content, form])
+
+  useEffect(() => {
+    // Update form content when markdown value changes
+    form.setValue("content", mdValue)
+  }, [mdValue, form])
 
   const getDraftingModeInfo = () => {
     const modeConfig = {
@@ -181,7 +220,7 @@ export function ContentEditor({ mode, targetId, onSuccess }: ContentEditorProps)
 
       setIsGenerating(true)
       const result = await generateContent({ 
-        content,
+        content: stripMarkdown(content),
         mode: content.length > 280 ? "both" : "headliner"
       })
 
@@ -191,10 +230,10 @@ export function ContentEditor({ mode, targetId, onSuccess }: ContentEditorProps)
       }
 
       if (result.headliner) {
-        form.setValue("headliner", result.headliner)
+        form.setValue("headliner", stripMarkdown(result.headliner))
       }
       if (result.shortContent) {
-        form.setValue("shortContent", result.shortContent)
+        form.setValue("shortContent", stripMarkdown(result.shortContent))
       }
 
       toast.success("AI content generated successfully!")
@@ -322,12 +361,21 @@ export function ContentEditor({ mode, targetId, onSuccess }: ContentEditorProps)
             )}
           </Button>
         </div>
-        <Textarea
-          id="content"
-          placeholder={placeholders[mode]}
-          {...form.register("content")}
-          className="min-h-[150px] resize-none focus-visible:ring-2 focus-visible:ring-offset-2"
-        />
+        <div data-color-mode="auto" className="relative">
+          <MDEditor
+            value={mdValue}
+            onChange={(val) => setMdValue(val || "")}
+            preview="edit"
+            height={250}
+            hideToolbar={false}
+            visibleDragbar={false}
+            className="focus-visible:ring-2 focus-visible:ring-offset-2"
+            textareaProps={{
+              placeholder: placeholders[mode],
+              "aria-label": mode === "post" ? "Post content" : mode === "comment" ? "Comment" : "Your Quote"
+            }}
+          />
+        </div>
         {form.formState.errors.content && (
           <p className="text-sm text-red-500 mt-1">{form.formState.errors.content.message}</p>
         )}

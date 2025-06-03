@@ -20,7 +20,7 @@ export function PostsList({ mode, feedType }: PostsListProps) {
   const [cursor, setCursor] = useState<string | undefined>(undefined)
   const loaderRef = useRef<HTMLDivElement>(null)
 
-  const loadPosts = async (cursorId?: string) => {
+  const loadPosts = useCallback(async (cursorId?: string) => {
     try {
       setLoading(true)
       const fetchPosts = feedType === 'following' ? getFollowingPosts : getLatestPosts
@@ -41,7 +41,7 @@ export function PostsList({ mode, feedType }: PostsListProps) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [feedType])
 
   // Intersection Observer callback
   const handleObserver = useCallback((entries: IntersectionObserverEntry[]) => {
@@ -66,10 +66,12 @@ export function PostsList({ mode, feedType }: PostsListProps) {
     return () => observer.disconnect()
   }, [handleObserver])
 
-  // Initial load
+  // Reset and load posts when feedType changes
   useEffect(() => {
+    setCursor(undefined)
+    setHasMore(true)
     loadPosts()
-  }, [feedType])
+  }, [feedType, loadPosts])
 
   if (loading && posts.length === 0) {
     return <div className="flex justify-center p-4"><Loader2 className="h-6 w-6 animate-spin" /></div>

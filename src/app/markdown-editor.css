@@ -1,0 +1,71 @@
+/* Override default markdown editor styles */
+.w-md-editor {
+  --md-editor-bg-color: hsl(var(--background));
+  --md-editor-color: hsl(var(--foreground));
+  --md-editor-border-color: hsl(var(--border));
+  --md-editor-toolbar-bg-color: hsl(var(--muted));
+  --md-editor-toolbar-color: hsl(var(--muted-foreground));
+  --md-editor-toolbar-active-color: hsl(var(--primary));
+  --md-editor-toolbar-hover-bg-color: hsl(var(--accent));
+  background-color: var(--md-editor-bg-color) !important;
+  color: var(--md-editor-color) !important;
+  border-color: var(--md-editor-border-color) !important;
+  border-radius: var(--radius);
+}
+
+.w-md-editor-toolbar {
+  background-color: var(--md-editor-toolbar-bg-color) !important;
+  border-color: var(--md-editor-border-color) !important;
+  border-top-left-radius: var(--radius);
+  border-top-right-radius: var(--radius);
+}
+
+.w-md-editor-toolbar ul > li > button {
+  color: var(--md-editor-toolbar-color) !important;
+}
+
+.w-md-editor-toolbar ul > li > button:hover {
+  background-color: var(--md-editor-toolbar-hover-bg-color) !important;
+  color: var(--md-editor-toolbar-active-color) !important;
+}
+
+.w-md-editor-toolbar ul > li > button[aria-checked="true"] {
+  color: var(--md-editor-toolbar-active-color) !important;
+}
+
+.w-md-editor-text {
+  background-color: var(--md-editor-bg-color) !important;
+  color: var(--md-editor-color) !important;
+}
+
+.w-md-editor-preview {
+  background-color: var(--md-editor-bg-color) !important;
+  color: var(--md-editor-color) !important;
+}
+
+/* Ensure editor takes full width */
+.w-md-editor-content {
+  min-height: 200px;
+}
+
+/* Dark mode specific overrides */
+[data-color-mode="dark"] .wmde-markdown-color {
+  background-color: var(--md-editor-bg-color) !important;
+  color: var(--md-editor-color) !important;
+}
+
+[data-color-mode="dark"] .wmde-markdown-color code {
+  background-color: hsl(var(--muted)) !important;
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+[data-color-mode="dark"] .wmde-markdown-color pre {
+  background-color: hsl(var(--muted)) !important;
+  border-color: hsl(var(--border)) !important;
+}
+
+/* Fix focus styles */
+.w-md-editor:focus-within {
+  outline: none !important;
+  box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--ring)) !important;
+} 

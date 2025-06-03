@@ -3,7 +3,7 @@
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { Heart, MessageCircle, AlignLeft, BookOpen, Reply, Repeat, ExternalLink, Quote } from "lucide-react"
+import { Heart, MessageCircle, AlignLeft, BookOpen, Reply, Repeat, ExternalLink, Quote, Newspaper, X } from "lucide-react"
 import Link from "next/link"
 import { formatDistanceToNow } from "date-fns"
 import type { ContentMode } from "./mode-switcher"
@@ -15,6 +15,8 @@ import { cn } from "@/lib/utils"
 import { RepostButton } from "./repost-button"
 import type { PostWithAuthor } from "@/lib/types"
 import { toggleLike } from "@/lib/actions/post"
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 function RelativeTime({ date }: { date: Date }) {
   const [relativeTime, setRelativeTime] = useState<string>('')
@@ -45,6 +47,7 @@ export function PostCard({ post, mode, isEmbedded }: PostCardProps) {
   const [likeCount, setLikeCount] = useState(post.likes?.length ?? 0)
   const [commentCount, setCommentCount] = useState(post.comments?.length ?? 0)
   const [quoteCount, setQuoteCount] = useState(post.quoted?.length ?? 0)
+  const [overrideMode, setOverrideMode] = useState<ContentMode | null>(null)
 
   useEffect(() => {
     if (session?.user) {
@@ -82,6 +85,10 @@ export function PostCard({ post, mode, isEmbedded }: PostCardProps) {
 
   // If this is a repost, we should display the reposted content
   const displayPost = post.repostPost || post
+  const currentMode = overrideMode || mode
+  const hasShortContent = displayPost.shortContent && displayPost.shortContent !== displayPost.headliner
+  const hasFullContent = displayPost.fullContent
+  const hasExtendedContent = hasShortContent || hasFullContent
 
   const handleQuoteClick = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -93,7 +100,13 @@ export function PostCard({ post, mode, isEmbedded }: PostCardProps) {
   }
 
   return (
-    <Card className="transition-colors hover:bg-muted/50">
+    <Card 
+      className={cn(
+        "transition-colors hover:bg-muted/50",
+        overrideMode && "border-2 border-primary/30",
+        "transition-all duration-200 ease-in-out"
+      )}
+    >
       <CardHeader>
         <div className="flex items-center justify-between">
           <Link href={`/profile/${post.author.id}`} className="flex items-center space-x-2">
@@ -107,11 +120,78 @@ export function PostCard({ post, mode, isEmbedded }: PostCardProps) {
             </div>
           </Link>
           <div className="flex items-center gap-2">
-            {displayPost.shortContent && displayPost.shortContent !== displayPost.headliner && (
-              <AlignLeft className="h-4 w-4 text-muted-foreground" />
-            )}
-            {displayPost.fullContent && (
-              <BookOpen className="h-4 w-4 text-muted-foreground" />
+            {hasExtendedContent && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={cn(
+                    "h-8 w-8 transition-colors",
+                    currentMode === "HEADLINER" && (
+                      overrideMode === "HEADLINER" 
+                        ? "bg-primary/10 text-primary hover:bg-primary/20" 
+                        : "text-primary"
+                    )
+                  )}
+                  onClick={() => setOverrideMode(
+                    overrideMode === "HEADLINER" ? null : "HEADLINER"
+                  )}
+                  title="Show headliner"
+                >
+                  <Newspaper className="h-4 w-4" />
+                </Button>
+                {hasShortContent && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={cn(
+                      "h-8 w-8 transition-colors",
+                      currentMode === "SHORT" && (
+                        overrideMode === "SHORT" 
+                          ? "bg-primary/10 text-primary hover:bg-primary/20" 
+                          : "text-primary"
+                      )
+                    )}
+                    onClick={() => setOverrideMode(
+                      overrideMode === "SHORT" ? null : "SHORT"
+                    )}
+                    title="Show short content"
+                  >
+                    <AlignLeft className="h-4 w-4" />
+                  </Button>
+                )}
+                {hasFullContent && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={cn(
+                      "h-8 w-8 transition-colors",
+                      currentMode === "FULL" && (
+                        overrideMode === "FULL" 
+                          ? "bg-primary/10 text-primary hover:bg-primary/20" 
+                          : "text-primary"
+                      )
+                    )}
+                    onClick={() => setOverrideMode(
+                      overrideMode === "FULL" ? null : "FULL"
+                    )}
+                    title="Show full content"
+                  >
+                    <BookOpen className="h-4 w-4" />
+                  </Button>
+                )}
+                {overrideMode && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                    onClick={() => setOverrideMode(null)}
+                    title="Reset to default mode"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </>
             )}
             <Link 
               href={`/post/${post.id}`}
@@ -182,32 +262,44 @@ export function PostCard({ post, mode, isEmbedded }: PostCardProps) {
           </div>
         )}
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
         {post.repostPost ? (
           <>
-            {mode === "HEADLINER" && (
+            {currentMode === "HEADLINER" && (
               <p>{post.repostPost.headliner}</p>
             )}
-            {mode === "SHORT" && (
-              <p>{post.repostPost.shortContent || post.repostPost.headliner}</p>
-            )}
-            {mode === "FULL" && (
+            {currentMode === "SHORT" && (
               <div className="prose dark:prose-invert max-w-none">
-                {post.repostPost.fullContent || post.repostPost.shortContent || post.repostPost.headliner}
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {post.repostPost.shortContent || post.repostPost.headliner}
+                </ReactMarkdown>
+              </div>
+            )}
+            {currentMode === "FULL" && (
+              <div className="prose dark:prose-invert max-w-none">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {post.repostPost.fullContent || post.repostPost.shortContent || post.repostPost.headliner}
+                </ReactMarkdown>
               </div>
             )}
           </>
         ) : (
           <>
-            {mode === "HEADLINER" && (
+            {currentMode === "HEADLINER" && (
               <p>{post.headliner}</p>
             )}
-            {mode === "SHORT" && (
-              <p>{post.shortContent || post.headliner}</p>
-            )}
-            {mode === "FULL" && (
+            {currentMode === "SHORT" && (
               <div className="prose dark:prose-invert max-w-none">
-                {post.fullContent || post.shortContent || post.headliner}
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {post.shortContent || post.headliner}
+                </ReactMarkdown>
+              </div>
+            )}
+            {currentMode === "FULL" && (
+              <div className="prose dark:prose-invert max-w-none">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {post.fullContent || post.shortContent || post.headliner}
+                </ReactMarkdown>
               </div>
             )}
           </>
