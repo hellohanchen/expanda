@@ -1,0 +1,25 @@
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import "./globals.css";
+import { RootLayoutClient } from "@/components/layout/root-layout-client";
+
+const inter = Inter({ subsets: ["latin"] });
+
+export const metadata: Metadata = {
+  title: "Expanda - Share Your Stories",
+  description: "A modern platform for sharing content in multiple formats",
+};
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <html lang="en" className="h-full" suppressHydrationWarning>
+      <body className={`min-h-full bg-background font-sans antialiased overflow-hidden ${inter.className}`}>
+        <RootLayoutClient>{children}</RootLayoutClient>
+      </body>
+    </html>
+  );
+}

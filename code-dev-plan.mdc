@@ -1,0 +1,195 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Expanda: Social Media App - Development Plan
+
+## I. Core Project Foundation
+
+1.  **Project Setup:**
+    *   Initialize Next.js 14: `npx create-next-app@latest expanda --typescript --tailwind --eslint --app`
+    *   Integrate Prisma ORM for PostgreSQL: `npm install prisma --save-dev`, then `npx prisma init --datasource-provider postgresql`. Configure `DATABASE_URL` in `.env`.
+    *   Setup NextAuth.js for authentication: `npm install next-auth`.
+    *   Initialize Shadcn UI: `npx shadcn-ui@latest init`.
+    *   Install Zod for validation: `npm install zod`.
+    *   Install `next-safe-action` for type-safe server actions: `npm install next-safe-action`.
+    *   Install `lucide-react` for icons.
+
+2.  **Database Schema Design (`prisma/schema.prisma`):**
+    *   **Key Models:** `User`, `Post`, `Comment`, `Like`, `Follow`.
+    *   **`User` Model:** Standard fields (id, email, name, passwordHash), relations to posts, comments, likes, accounts, sessions, and follows.
+    *   **`Post` Model:**
+        *   `id`, `authorId`, `createdAt`, `updatedAt`
+        *   `headliner`: `String` (Always present, max length e.g., 150 chars)
+        *   `shortContent`: `String` (Max length e.g., 280 chars. Can be same as `headliner` or user-provided/AI-generated)
+        *   `fullContent`: `String?` (Nullable. Can be same as `shortContent` or user-provided/AI-generated long-form text)
+        *   `originalMode`: `ContentMode` (Enum: `HEADLINER`, `SHORT`, `FULL`) - Indicates the primary mode chosen by the author.
+        *   Relations to `User` (author), `Comment[]`, `Like[]`.
+    *   **`ContentMode` Enum:**
+        ```prisma
+        enum ContentMode {
+          HEADLINER
+          SHORT
+          FULL
+        }
+        ```
+    *   **Auxiliary Models:** `Account`, `Session`, `VerificationToken` (for NextAuth.js). `Comment`, `Like`, `Follow` with standard fields and relations.
+
+    *Example `Post` model snippet:*
+    ```prisma
+    model Post {
+      id            String    @id @default(cuid())
+      authorId      String
+      author        User      @relation(fields: [authorId], references: [id])
+      createdAt     DateTime  @default(now())
+      updatedAt     DateTime  @updatedAt
+
+      headliner     String    @db.VarChar(150) // Example: Max 150 chars
+      shortContent  String    @db.VarChar(280) // Example: Max 280 chars
+      fullContent   String?   @db.Text         // For potentially long content
+      originalMode  ContentMode
+
+      comments      Comment[]
+      likes         Like[]
+    }
+    ```
+
+3.  **Directory Structure (Following Next.js App Router conventions):**
+    ```
+    expanda/
+    ├── app/
+    │   ├── (auth)/                 # Group for auth-related routes (login, register)
+    │   │   ├── login/page.tsx
+    │   │   └── register/page.tsx
+    │   ├── (main)/                 # Group for main app routes requiring layout
+    │   │   ├── layout.tsx          # Main app layout (Navbar, Sidebar)
+    │   │   ├── page.tsx            # Home feed
+    │   │   ├── [username]/         # User profile route group
+    │   │   │   └── page.tsx
+    │   │   ├── post/
+    │   │   │   ├── [postId]/page.tsx # View individual post
+    │   │   │   └── create/page.tsx   # Create post page
+    │   │   └── settings/page.tsx
+    │   ├── api/
+    │   │   └── auth/[...nextauth]/route.ts # NextAuth.js dynamic route handler
+    │   ├── layout.tsx              # Root layout
+    │   └── global-error.tsx        # Global error boundary
+    ├── components/
+    │   ├── auth/                   # Auth-specific UI (e.g., LoginForm)
+    │   ├── forms/                  # Reusable form components
+    │   ├── icons/                  # Custom icons or icon wrappers
+    │   ├── layout/                 # Navbar, Sidebar, Footer components
+    │   ├── post/                   # Post-specific UI (PostCard, PostComposer, ModeSwitcher)
+    │   └── ui/                     # Shadcn UI components (or re-exported)
+    ├── lib/
+    │   ├── actions/                # Server Actions (e.g., post.actions.ts, user.actions.ts)
+    │   ├── auth.ts                 # NextAuth.js configuration options
+    │   ├── constants.ts            # Application-wide constants
+    │   ├── db.ts                   # Prisma client instance export
+    │   ├── definitions.ts          # TypeScript type definitions and interfaces
+    │   ├── hooks/                  # Custom React hooks
+    │   ├── utils.ts                # Utility functions
+    │   └── validators/             # Zod schemas (e.g., post.validators.ts)
+    ├── prisma/
+    │   └── schema.prisma
+    ├── public/
+    ├── styles/
+    │   └── globals.css
+    ├── .env.local
+    ├── next.config.mjs
+    └── tsconfig.json
+    ```
+
+## II. Backend Development (Server Actions & API Logic)
+
+1.  **Authentication:**
+    *   Implement NextAuth.js with chosen providers (e.g., Credentials for email/password, OAuth providers).
+    *   Protect routes and server actions.
+
+2.  **User Profile Management:**
+    *   Server actions for fetching and updating user profiles.
+
+3.  **Post Creation & Management (using `next-safe-action`):**
+    *   `createPost` action:
+        *   Input: `authorId`, `originalMode`, `headliner?`, `shortContent?`, `fullContent?`, `aiGenerateFlags?`.
+        *   Logic:
+            *   Validate input using Zod schema (defined in `lib/validators/post.validators.ts`).
+            *   Based on `originalMode`:
+                *   If `HEADLINER`: `headliner` is required. `shortContent` and `fullContent` default to `headliner`.
+                *   If `SHORT`: `shortContent` is required. `headliner` can be user-provided or AI-generated (if `aiGenerateFlags.headliner`). `fullContent` defaults to `shortContent`.
+                *   If `FULL`: `fullContent` is required. `shortContent` and `headliner` can be user-provided or AI-generated (if `aiGenerateFlags.short` / `aiGenerateFlags.headliner`).
+            *   (Optional AI Step) If AI generation is requested, call a separate service/helper to interact with an AI API (e.g., OpenAI) for summarization/generation.
+            *   Save the post to the database.
+        *   Return `ActionResponse` (from `next-safe-action` and your custom types).
+    *   `getPost(postId)`: Fetch a single post.
+    *   `getPosts(filters)`: Fetch posts for feeds. Filters could include `userId`, `modePreference` (for user's reading mode), pagination, etc.
+    *   `updatePost`, `deletePost` actions.
+
+4.  **Interaction Logic:**
+    *   Server actions for `likePost`, `unlikePost`, `createComment`, `deleteComment`, `followUser`, `unfollowUser`.
+    *   All actions should be type-safe using Zod schemas and return `ActionResponse`.
+
+5.  **AI Content Generation Service (Conceptual):**
+    *   A module (`lib/ai.ts` or similar) that abstracts calls to an AI service (e.g., OpenAI API).
+    *   Functions like `generateHeadlinerFromShort(text: string): Promise<string>` or `generateShortFromFull(text: string): Promise<string>`.
+    *   To be called within the `createPost` server action or by a dedicated AI generation action if users can trigger it separately post-creation.
+
+## III. Frontend Development (React Components & UI/UX)
+
+1.  **Core UI & Layout:**
+    *   Implement Navbar, Sidebar (if any), and main content area using Server Components and Shadcn UI.
+    *   Responsive design using Tailwind CSS (mobile-first approach).
+
+2.  **Authentication Pages/Components:**
+    *   Login and Registration forms using React Hook Form, Zod for client-side validation (can be reused with server action validation), and `useActionState` for handling submission and server responses.
+
+3.  **Post Composer (`app/(main)/post/create/page.tsx` and `components/post/PostComposer.tsx`):**
+    *   Form with fields for Headliner, Short Content, Full Content.
+    *   Radio buttons/tabs to select the `originalMode`.
+    *   UI elements to conditionally show/hide input fields based on selected `originalMode`.
+    *   Buttons/checkboxes to trigger AI generation for headliner/short content.
+    *   Use `useActionState` and `react-hook-form` to manage form state and submission to the `createPost` server action.
+
+4.  **Post Display (`components/post/PostCard.tsx`):**
+    *   Accepts a `post` object and a `displayMode` prop (headliner, short, full).
+    *   Renders the appropriate content (`post.headliner`, `post.shortContent`, or `post.fullContent`) based on `displayMode`.
+    *   Includes actions (like, comment counts).
+    *   Implement swipe/button controls to switch `displayMode` for the individual post card view (client component).
+
+5.  **Feed/Timeline (`app/(main)/page.tsx`):**
+    *   Server Component to fetch initial posts.
+    *   Client Component wrapper for feed controls (e.g., selecting global reading mode - headliner, short, full). This selection would refetch data or filter client-side if all versions are fetched.
+    *   Infinite scrolling or pagination for loading more posts.
+    *   Each post in the feed uses the `PostCard` component, passing the user's selected global reading mode.
+
+6.  **Post Detail Page (`app/(main)/post/[postId]/page.tsx`):**
+    *   Displays full post details, comments.
+    *   Allows switching between headliner, short, and full content views of the main post.
+
+7.  **User Profile Page (`app/(main)/[username]/page.tsx`):**
+    *   Displays user information and their posts.
+
+8.  **Error Handling:**
+    *   Use `error.tsx` for route segment error boundaries.
+    *   Use `global-error.tsx` for a global error UI.
+    *   Display user-friendly error messages from server actions (via `ActionResponse` and `useActionState`).
+
+## IV. Key Considerations & Best Practices (from `.cursorrules`)
+
+*   **Minimize 'use client':** Leverage Server Components as much as possible. Client Components for interactivity only.
+*   **Named Exports:** For components.
+*   **RORO Pattern:** For functions/components where applicable.
+*   **Type Safety:** TypeScript everywhere, Zod for validation, `next-safe-action` for server actions.
+*   **Error Handling:** Prioritize as per rules – early returns, guard clauses, user-friendly messages.
+*   **State Management:** Rely on Next.js App Router, Server Actions, and `useActionState`. Use React Context or Zustand for complex global client-side state if necessary, but prefer simpler solutions first.
+*   **Services Directory (`lib/services/` or similar):** If you have complex business logic that needs to be reused across server actions or other backend parts, consider a services layer. Code in `services/` should throw user-friendly errors for TanStack Query (if you decide to use it for client-side data fetching beyond server actions) or for server actions to catch and return.
+
+## V. Iteration & Future Features
+
+*   Notifications
+*   Search functionality
+*   Direct messaging
+*   Advanced content filtering
+*   Analytics
+

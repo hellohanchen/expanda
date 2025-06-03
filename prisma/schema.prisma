@@ -1,0 +1,146 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Post {
+  id            String    @id @default(cuid())
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  headliner     String    @db.Text
+  shortContent  String    @db.Text
+  fullContent   String?   @db.Text
+  published     Boolean   @default(true)
+  
+  // Relations
+  author        User      @relation(fields: [authorId], references: [id])
+  authorId      String
+  
+  // Likes
+  likes         Like[]
+  
+  // Comments (posts that are replies to this post)
+  comments      Post[]    @relation("Comments")
+  parentPost    Post?     @relation("Comments", fields: [parentPostId], references: [id], onDelete: Cascade)
+  parentPostId  String?
+  
+  // Quotes (posts that quote this post)
+  quoted       Post[]    @relation("Quotes")
+  quotePost    Post?     @relation("Quotes", fields: [quotePostId], references: [id], onDelete: Cascade)
+  quotePostId  String?
+  
+  // Reposts (posts that repost this post)
+  reposts      Post[]    @relation("Reposts")
+  repostPost   Post?     @relation("Reposts", fields: [repostPostId], references: [id], onDelete: Cascade)
+  repostPostId String?
+
+  @@index([authorId])
+  @@index([parentPostId])
+  @@index([quotePostId])
+  @@index([repostPostId])
+}
+
+model User {
+  id            String    @id @default(cuid())
+  username      String    @unique @db.VarChar(32) // Required, unique username, max 32 chars
+  handle        String    @unique @db.VarChar(18) // Required, unique handle, 6-18 chars
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Social Media Links
+  xUsername     String?   // Twitter/X username
+  mediumUsername String?  // Medium username
+  linkedinUrl   String?   // LinkedIn profile URL
+  githubUsername String?  // GitHub username
+  websiteUrl    String?   // Personal website
+
+  // Relations
+  posts         Post[]
+  likes         Like[]
+  followers     Follow[]   @relation("Following")
+  following     Follow[]   @relation("Followers")
+
+  // NextAuth.js
+  accounts      Account[]
+  sessions      Session[]
+}
+
+model Like {
+  // Relations
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@id([postId, userId])
+  @@index([postId])
+  @@index([userId])
+}
+
+model Follow {
+  // Relations
+  followerId  String
+  followingId String
+  follower    User     @relation("Following", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User     @relation("Followers", fields: [followingId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+
+  @@id([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+}
+
+// NextAuth.js Models
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?  @db.Text
+  access_token       String?  @db.Text
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?  @db.Text
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}

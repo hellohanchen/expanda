@@ -1,0 +1,21 @@
+version: '3.8'
+services:
+  postgres:
+    image: postgres:16
+    container_name: expanda-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: expanda
+      POSTGRES_PASSWORD: expanda123
+      POSTGRES_DB: expanda
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U expanda"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data: 
