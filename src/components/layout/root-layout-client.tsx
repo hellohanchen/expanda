@@ -3,6 +3,7 @@
 import { NextAuthProvider } from "@/components/auth/next-auth-provider"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Navbar } from "@/components/layout/navbar"
+import { Footer } from "@/components/layout/footer"
 import { AuthGuard } from "@/components/auth/auth-guard"
 import { ReadingModeProvider } from "@/contexts/reading-mode-context"
 import { usePathname } from 'next/navigation'
@@ -39,7 +40,8 @@ export function RootLayoutClient({ children }: RootLayoutClientProps) {
           >
             <div className="relative flex min-h-screen flex-col">
               {!isPublicPage && !isLoginPage && <Navbar />}
-              <main className="flex-1">{children}</main>
+              <main className="flex-1 pb-16">{children}</main>
+              <Footer />
             </div>
           </AuthGuard>
         </ReadingModeProvider>

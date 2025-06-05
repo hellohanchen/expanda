@@ -334,7 +334,15 @@ export function ContentEditor({ mode, targetId, onSuccess }: ContentEditorProps)
             </div>
           </div>
           <div className="text-l font-medium">
-            {content.length} chars
+            <span className={`${
+              content.length > 4500 ? 'text-red-600 font-bold' :
+              content.length > 4000 ? 'text-orange-600 font-semibold' :
+              content.length > 3000 ? 'text-yellow-600' :
+              'text-foreground'
+            }`}>
+              {content.length}
+            </span>
+            <span className="text-muted-foreground">/5000</span>
           </div>
         </CardContent>
       </Card>
@@ -378,6 +386,16 @@ export function ContentEditor({ mode, targetId, onSuccess }: ContentEditorProps)
         </div>
         {form.formState.errors.content && (
           <p className="text-sm text-red-500 mt-1">{form.formState.errors.content.message}</p>
+        )}
+        {content.length > 4500 && content.length <= 5000 && (
+          <p className="text-sm text-orange-600 mt-1 font-medium">
+            ⚠️ Approaching character limit: {5000 - content.length} characters remaining
+          </p>
+        )}
+        {content.length > 4000 && content.length <= 4500 && (
+          <p className="text-sm text-yellow-600 mt-1">
+            📝 You&apos;re getting close to the character limit
+          </p>
         )}
       </div>
 
@@ -428,11 +446,13 @@ export function ContentEditor({ mode, targetId, onSuccess }: ContentEditorProps)
       <div className="pt-4">
         <Button 
           type="submit" 
-          disabled={isSubmitting} 
+          disabled={isSubmitting || content.length > 5000} 
           className="w-full"
           onClick={() => console.log('Button clicked')}
         >
-          {isSubmitting ? "Posting..." : `${mode.toUpperCase()}`}
+          {isSubmitting ? "Posting..." : 
+           content.length > 5000 ? "Content too long" : 
+           `${mode.toUpperCase()}`}
         </Button>
       </div>
     </form>
