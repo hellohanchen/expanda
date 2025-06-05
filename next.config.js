@@ -1,8 +1,6 @@
 /** @type {import('next').NextConfig} */
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
-const isDev = process.env.NODE_ENV !== 'production'
-
 const nextConfig = {
   experimental: {
     serverActions: {
@@ -10,23 +8,21 @@ const nextConfig = {
     }
   },
   async rewrites() {
-    return isDev
-      ? {
-          beforeFiles: [
+    return {
+      beforeFiles: [
+        {
+          source: '/:path*',
+          has: [
             {
-              source: '/:path*',
-              has: [
-                {
-                  type: 'header',
-                  key: 'x-use-https',
-                  value: 'true',
-                },
-              ],
-              destination: 'https://localhost:3001/:path*',
+              type: 'header',
+              key: 'x-use-https',
+              value: 'true',
             },
           ],
-        }
-      : {}
+          destination: 'https://localhost:3001/:path*',
+        },
+      ],
+    }
   },
   webpack: (config, { isServer }) => {
     if (!isServer) {
