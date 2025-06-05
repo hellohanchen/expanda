@@ -19,7 +19,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="h-full" suppressHydrationWarning>
-      <body className={`min-h-full bg-background font-sans antialiased overflow-hidden ${inter.className}`}>
+      <body className={`min-h-full bg-background font-sans antialiased ${inter.className}`}>
         <RootLayoutClient>{children}</RootLayoutClient>
       </body>
     </html>
