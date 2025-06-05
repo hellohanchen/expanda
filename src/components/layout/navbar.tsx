@@ -1,9 +1,15 @@
 import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { UserNav } from "./user-nav"
 import { useReadingMode } from "@/contexts/reading-mode-context"
-import { cn } from "@/lib/utils"
 
 export function Navbar() {
   const { mode } = useReadingMode()

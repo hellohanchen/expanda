@@ -21,7 +21,7 @@ export async function createPost(data: CreatePostInput): Promise<{ error?: strin
 
     // Determine which content to use based on the content length
     const contentLength = validatedData.content.length
-    let postData = {
+    const postData = {
       headliner: "",
       shortContent: "",
       fullContent: null as string | null,
@@ -131,7 +131,7 @@ export async function createComment(data: CreateCommentInput): Promise<{ error?:
 
     // Determine which content to use based on the content length
     const contentLength = validatedData.content.length
-    let postData = {
+    const postData = {
       headliner: "",
       shortContent: "",
       fullContent: null as string | null,
@@ -266,7 +266,7 @@ export async function createQuote(data: CreateQuoteInput): Promise<{ error?: str
 
     // Determine which content to use based on the content length
     const contentLength = validatedData.content.length
-    let postData = {
+    const postData = {
       headliner: "",
       shortContent: "",
       fullContent: null as string | null,

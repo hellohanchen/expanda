@@ -1,4 +1,4 @@
-import { Post as PrismaPost, User as PrismaUser, Like, Follow } from "../generated/prisma"
+import { User as PrismaUser } from "../generated/prisma"
 
 export interface UserWithProfile extends PrismaUser {
   posts: Post[]

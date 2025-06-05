@@ -7,9 +7,9 @@ import { ProfilePageClient } from "./profile-page-client"
 import type { User as PrismaUser, Post } from "@/generated/prisma"
 
 interface ProfilePageProps {
-  params: {
+  params: Promise<{
     userId: string
-  }
+  }>
 }
 
 async function getProfile(userId: string): Promise<UserWithProfile & { posts: PostWithAuthor[] }> {

@@ -1,6 +1,3 @@
-import { Button } from "@/components/ui/button"
-import Link from "next/link"
-import { Plus } from "lucide-react"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { MainContent } from "@/components/layout/main-content"

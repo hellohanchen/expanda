@@ -3,12 +3,12 @@ import { FollowersListClient } from "@/components/user/followers-list-client"
 import { UserWithProfile } from "@/lib/types"
 
 interface FollowersPageProps {
-  params: {
+  params: Promise<{
     userId: string
-  }
-  searchParams: {
+  }>
+  searchParams: Promise<{
     page?: string
-  }
+  }>
 }
 
 export default async function FollowersPage({ params, searchParams }: FollowersPageProps) {

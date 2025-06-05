@@ -14,10 +14,10 @@ import { useState } from "react"
 
 interface MainContentProps {
   userName?: string | null
-  welcomeMessage: string
+  welcomeMessage?: string
 }
 
-export function MainContent({ userName, welcomeMessage }: MainContentProps) {
+export function MainContent({ userName }: MainContentProps) {
   const { mode, setMode } = useReadingMode()
   const scrollRef = useScrollState()
   const [feedType, setFeedType] = useState<'all' | 'following'>('all')
