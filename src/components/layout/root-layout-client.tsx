@@ -13,7 +13,10 @@ interface RootLayoutClientProps {
 
 export function RootLayoutClient({ children }: RootLayoutClientProps) {
   const pathname = usePathname()
-  const isLoginPage = pathname === '/login'
+  
+  // Public pages that don't require authentication
+  const publicPages = ['/login', '/privacy', '/terms']
+  const isPublicPage = publicPages.includes(pathname)
 
   return (
     <ThemeProvider
@@ -24,9 +27,9 @@ export function RootLayoutClient({ children }: RootLayoutClientProps) {
     >
       <NextAuthProvider>
         <ReadingModeProvider>
-          <AuthGuard requireAuth={!isLoginPage}>
+          <AuthGuard requireAuth={!isPublicPage}>
             <div className="relative flex min-h-screen flex-col">
-              {!isLoginPage && <Navbar />}
+              {!isPublicPage && <Navbar />}
               <main className="flex-1">{children}</main>
             </div>
           </AuthGuard>
