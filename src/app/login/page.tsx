@@ -5,6 +5,7 @@ import { Chrome } from "lucide-react"
 import { signIn } from "next-auth/react"
 import { useSearchParams } from "next/navigation"
 import { AuthGuard } from "@/components/auth/auth-guard"
+import Link from "next/link"
 
 export default function LoginPage() {
   const searchParams = useSearchParams()
@@ -28,6 +29,17 @@ export default function LoginPage() {
               <Chrome className="w-6 h-6" />
               Continue with Google
             </Button>
+            
+            <p className="text-center text-sm text-muted-foreground">
+              By signing in, you agree to our{' '}
+              <Link href="/terms" className="text-blue-600 hover:underline">
+                Terms of Service
+              </Link>{' '}
+              and{' '}
+              <Link href="/privacy" className="text-blue-600 hover:underline">
+                Privacy Policy
+              </Link>
+            </p>
           </div>
         </div>
       </div>

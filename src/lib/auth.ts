@@ -6,9 +6,51 @@ import GoogleProvider from "next-auth/providers/google"
 import { env } from "./env"
 import { ExtendedSession } from "./types"
 import { generateUsernameAndHandle } from "./utils/generate-username"
+import type { Adapter, AdapterUser } from "next-auth/adapters"
+
+// Custom adapter that extends PrismaAdapter to handle username generation
+function createCustomPrismaAdapter(): Adapter {
+  const baseAdapter = PrismaAdapter(prisma)
+  
+  return {
+    ...baseAdapter,
+    async createUser(user: Omit<AdapterUser, "id"> & { id?: string }) {
+      try {
+        console.log("Creating user with data:", user)
+        
+        // Generate username and handle for new users
+        const { username, handle } = await generateUsernameAndHandle(user.name || 'user')
+        
+        console.log("Generated username:", username, "handle:", handle)
+        
+        // Create user with generated username and handle
+        // Let Prisma generate the ID if not provided
+        const userData = {
+          name: user.name,
+          email: user.email,
+          emailVerified: user.emailVerified,
+          image: user.image,
+          username,
+          handle,
+          ...(user.id && { id: user.id }),
+        }
+        
+        const newUser = await prisma.user.create({
+          data: userData,
+        })
+        
+        console.log("Successfully created user:", newUser.id)
+        return newUser
+      } catch (error) {
+        console.error("Error creating user:", error)
+        throw error
+      }
+    }
+  }
+}
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
+  adapter: createCustomPrismaAdapter(),
   session: {
     strategy: "jwt"
   },
@@ -24,18 +66,6 @@ export const authOptions: NextAuthOptions = {
       clientSecret: env.GOOGLE_SECRET ?? "",
     }),
   ],
-  events: {
-    async createUser({ user }) {
-      // Generate username and handle for new users
-      const { username, handle } = await generateUsernameAndHandle(user.name || 'user')
-      
-      // Update the user with the generated username and handle
-      await prisma.user.update({
-        where: { id: user.id },
-        data: { username, handle }
-      })
-    }
-  },
   callbacks: {
     async session({ session, token }: { session: Session; token: JWT }): Promise<ExtendedSession> {
       if (session?.user) {

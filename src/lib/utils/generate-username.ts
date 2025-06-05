@@ -8,28 +8,40 @@ function sanitizeForHandle(text: string): string {
 }
 
 async function generateUniqueHandle(baseName: string): Promise<string> {
-  const baseHandle = sanitizeForHandle(baseName)
+  // Clean the input name
+  const cleanName = baseName?.trim() || 'user'
+  const baseHandle = sanitizeForHandle(cleanName)
   
   // If base handle is too short, pad it
-  const paddedHandle = baseHandle.length < 6 ? baseHandle + "user" : baseHandle
+  const paddedHandle = baseHandle.length < 3 ? baseHandle + "user" : baseHandle
   
-  // Truncate to 18 characters max (to leave room for numbers if needed)
-  const truncatedHandle = paddedHandle.slice(0, 18)
+  // Truncate to leave room for numbers (max 18 chars)
+  const truncatedHandle = paddedHandle.slice(0, 14)
+  
+  // Ensure minimum length of 6 characters
+  const finalHandle = truncatedHandle.length < 6 ? (truncatedHandle + "user").slice(0, 14) : truncatedHandle
   
   // Try without number first
   const handleExists = await prisma.user.findUnique({
-    where: { handle: truncatedHandle }
+    where: { handle: finalHandle }
   })
 
   if (!handleExists) {
-    return truncatedHandle
+    return finalHandle
   }
 
   // Try with numbers until we find a unique one
   let counter = 1
-  while (counter < 1000) {
-    const numberSuffix = counter.toString()
-    const newHandle = truncatedHandle.slice(0, 18 - numberSuffix.length) + numberSuffix
+  while (counter < 10000) {
+    const counterStr = counter.toString()
+    const maxBaseLength = 18 - counterStr.length
+    const newHandle = finalHandle.slice(0, maxBaseLength) + counterStr
+    
+    // Ensure still meets minimum length requirement
+    if (newHandle.length < 6) {
+      counter++
+      continue
+    }
     
     const exists = await prisma.user.findUnique({
       where: { handle: newHandle }
@@ -43,53 +55,49 @@ async function generateUniqueHandle(baseName: string): Promise<string> {
   }
 
   // If we somehow get here, generate a random handle
-  return `user${Math.random().toString(36).slice(2, 8)}`
+  const randomSuffix = Math.random().toString(36).slice(2, 8)
+  return `user${randomSuffix}`
 }
 
 async function generateUniqueUsername(name: string): Promise<string> {
-  const baseUsername = name.replace(/[^\w\s]/g, '')
+  // Clean the input name
+  const cleanName = name?.trim() || 'user'
+  const baseUsername = cleanName.replace(/[^\w\s]/g, '').replace(/\s+/g, '') || 'user'
   
-  // Try the base username first
+  // Ensure minimum length
+  const finalBaseUsername = baseUsername.length < 3 ? `${baseUsername}user` : baseUsername
+  
+  // Try the base username first (truncate if too long)
+  const truncatedBase = finalBaseUsername.slice(0, 28) // Leave room for numbers
+  
   const usernameExists = await prisma.user.findUnique({
-    where: { username: baseUsername }
+    where: { username: truncatedBase }
   })
 
   if (!usernameExists) {
-    return baseUsername
+    return truncatedBase
   }
 
   // Try with numbers until we find a unique one
   let counter = 1
-  while (counter < 1000) {
-    const newUsername = `${baseUsername}${counter}`
+  while (counter < 10000) {
+    const counterStr = counter.toString()
+    const maxBaseLength = 32 - counterStr.length
+    const truncatedUsername = truncatedBase.slice(0, maxBaseLength) + counterStr
     
-    if (newUsername.length > 32) {
-      // If too long, truncate the base and add the number
-      const truncatedBase = baseUsername.slice(0, 32 - counter.toString().length)
-      const truncatedUsername = `${truncatedBase}${counter}`
-      
-      const exists = await prisma.user.findUnique({
-        where: { username: truncatedUsername }
-      })
+    const exists = await prisma.user.findUnique({
+      where: { username: truncatedUsername }
+    })
 
-      if (!exists) {
-        return truncatedUsername
-      }
-    } else {
-      const exists = await prisma.user.findUnique({
-        where: { username: newUsername }
-      })
-
-      if (!exists) {
-        return newUsername
-      }
+    if (!exists) {
+      return truncatedUsername
     }
 
     counter++
   }
 
   // If we somehow get here, generate a random username
-  return `user${Math.random().toString(36).slice(2, 8)}`
+  return `user${Math.random().toString(36).slice(2, 12)}`
 }
 
 export async function generateUsernameAndHandle(name: string): Promise<{ username: string; handle: string }> {
