@@ -8,6 +8,15 @@ const nextConfig = {
     }
   },
   async rewrites() {
+    const isDev = process.env.NODE_ENV !== 'production'
+    
+    if (!isDev) {
+      // No special rewrites needed in production
+      return {
+        beforeFiles: [],
+      }
+    }
+    
     return {
       beforeFiles: [
         {
