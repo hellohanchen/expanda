@@ -17,7 +17,7 @@ export function MobileReadingModeSwitcher({ mode, onChange }: MobileReadingModeS
   ]
 
   return (
-    <div className="fixed top-14 left-0 right-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <div className="fixed top-14 left-0 right-0 z-[55] border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto px-4 py-2">
         <div className="grid grid-cols-3 gap-2">
           {modes.map(({ value, icon: Icon }) => (

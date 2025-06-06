@@ -46,7 +46,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
         <main className={`flex-1 ${
           isMobile 
             ? showNavigation 
-              ? 'pt-12 pb-20' 
+              ? 'pt-28 pb-20' 
               : 'pb-20'
             : 'pb-16'
         }`}>
