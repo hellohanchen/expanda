@@ -10,9 +10,11 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { UserNav } from "./user-nav"
 import { useReadingMode } from "@/contexts/reading-mode-context"
+import { useMobile } from "@/hooks/use-mobile"
 
 export function Navbar() {
   const { mode } = useReadingMode()
+  const isMobile = useMobile()
 
   const logoSrc = {
     'HEADLINER': '/expanda_logo_small.svg',
@@ -20,12 +22,40 @@ export function Navbar() {
     'FULL': '/expanda_logo_large.svg'
   }[mode]
 
+  if (isMobile) {
+    return (
+      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container flex h-14 items-center justify-between px-4">
+          {/* Logo */}
+          <Link href="/" className="flex items-center space-x-2">
+            <Image
+              src={logoSrc}
+              alt="Expanda Logo"
+              width={20}
+              height={20}
+              className="dark:invert"
+            />
+            <span className="font-bold">Expanda</span>
+          </Link>
+          
+          {/* Create Post Button */}
+          <Button size="sm" className="bg-black text-white hover:bg-black/90" asChild>
+            <Link href="/post/create">Create</Link>
+          </Button>
+          
+          {/* User Nav */}
+          <UserNav />
+        </div>
+      </header>
+    )
+  }
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 items-center">
-        <div className="grid h-full w-full grid-cols-1 md:grid-cols-[250px_1fr_250px] gap-6">
+        <div className="grid h-full w-full grid-cols-[250px_1fr_250px] gap-6">
           {/* Left Section - Logo */}
-          <div className="hidden md:flex items-center justify-center">
+          <div className="flex items-center justify-center">
             <Link href="/" className="flex items-center space-x-2">
               <Image
                 src={logoSrc}
@@ -38,32 +68,15 @@ export function Navbar() {
             </Link>
           </div>
 
-          {/* Middle Section - Mobile Logo and Create Post */}
-          <div className="flex items-center justify-between md:justify-end">
-            {/* Logo only shows on mobile */}
-            <Link href="/" className="md:hidden flex items-center space-x-2">
-              <Image
-                src={logoSrc}
-                alt="Expanda Logo"
-                width={20}
-                height={20}
-                className="dark:invert"
-              />
-              <span className="font-bold">Expanda</span>
-            </Link>
-            
+          {/* Middle Section - Create Post */}
+          <div className="flex items-center justify-end">
             <Button className="bg-black text-white hover:bg-black/90" asChild>
               <Link href="/post/create">Create Post</Link>
             </Button>
           </div>
 
           {/* Right Section - User Nav */}
-          <div className="hidden md:flex items-center justify-center">
-            <UserNav />
-          </div>
-
-          {/* Mobile User Nav */}
-          <div className="md:hidden">
+          <div className="flex items-center justify-center">
             <UserNav />
           </div>
         </div>

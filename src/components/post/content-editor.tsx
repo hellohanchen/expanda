@@ -14,6 +14,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { PencilLine, FileText, BookOpen, Wand2 } from "lucide-react"
 import { Label } from "@/components/ui/label"
 import MDEditor, { commands } from '@uiw/react-md-editor'
+import { useMobile } from "@/hooks/use-mobile"
 
 type EditorMode = "post" | "comment" | "quote"
 
@@ -69,6 +70,7 @@ export function ContentEditor({ mode, targetId, onSuccess }: ContentEditorProps)
   const [showHeadliner, setShowHeadliner] = useState(false)
   const [showShortContent, setShowShortContent] = useState(false)
   const [mdValue, setMdValue] = useState("")
+  const isMobile = useMobile()
 
   // Select the appropriate schema based on the mode
   const schema = {
@@ -135,44 +137,44 @@ export function ContentEditor({ mode, targetId, onSuccess }: ContentEditorProps)
     const modeConfig = {
       post: {
         headliner: {
-          message: "You are drafting a headliner",
-          description: "Keep it short and catchy (max 50 characters)",
+          message: isMobile ? "Quick post" : "You are drafting a headliner",
+          description: isMobile ? "Max 50 chars" : "Keep it short and catchy (max 50 characters)",
         },
         short: {
-          message: "You are drafting a short post",
-          description: "Perfect for concise thoughts (50-280 characters)",
+          message: isMobile ? "Short post" : "You are drafting a short post",
+          description: isMobile ? "50-280 chars" : "Perfect for concise thoughts (50-280 characters)",
         },
         full: {
-          message: "You are drafting a full article",
-          description: "Express your thoughts in detail (280+ characters)",
+          message: isMobile ? "Full article" : "You are drafting a full article",
+          description: isMobile ? "280+ chars" : "Express your thoughts in detail (280+ characters)",
         },
       },
       comment: {
         headliner: {
-          message: "You are writing a quick comment",
-          description: "Keep it short and sweet (max 50 characters)",
+          message: isMobile ? "Quick comment" : "You are writing a quick comment",
+          description: isMobile ? "Max 50 chars" : "Keep it short and sweet (max 50 characters)",
         },
         short: {
-          message: "You are writing a detailed comment",
-          description: "Perfect for a thoughtful response (50-280 characters)",
+          message: isMobile ? "Short comment" : "You are writing a detailed comment",
+          description: isMobile ? "50-280 chars" : "Perfect for a thoughtful response (50-280 characters)",
         },
         full: {
-          message: "You are writing an in-depth response",
-          description: "Express your thoughts in detail (280+ characters)",
+          message: isMobile ? "Long comment" : "You are writing an in-depth response",
+          description: isMobile ? "280+ chars" : "Express your thoughts in detail (280+ characters)",
         },
       },
       quote: {
         headliner: {
-          message: "You are writing a quick quote",
-          description: "Keep it short and sweet (max 50 characters)",
+          message: isMobile ? "Quick quote" : "You are writing a quick quote",
+          description: isMobile ? "Max 50 chars" : "Keep it short and sweet (max 50 characters)",
         },
         short: {
-          message: "You are writing a detailed quote",
-          description: "Perfect for a thoughtful response (50-280 characters)",
+          message: isMobile ? "Short quote" : "You are writing a detailed quote",
+          description: isMobile ? "50-280 chars" : "Perfect for a thoughtful response (50-280 characters)",
         },
         full: {
-          message: "You are writing an in-depth quote",
-          description: "Express your thoughts in detail (280+ characters)",
+          message: isMobile ? "Long quote" : "You are writing an in-depth quote",
+          description: isMobile ? "280+ chars" : "Express your thoughts in detail (280+ characters)",
         },
       },
     }
@@ -325,15 +327,15 @@ export function ContentEditor({ mode, targetId, onSuccess }: ContentEditorProps)
       className="space-y-6"
     >
       <Card className={`border ${modeInfo.className} transition-colors duration-300`}>
-        <CardContent className="flex items-center justify-between">
+        <CardContent className={`flex items-center justify-between ${isMobile ? 'p-3' : 'p-4'}`}>
           <div className="flex items-center gap-2">
-            <Icon className="h-4 w-4" />
+            <Icon className={isMobile ? "h-3 w-3" : "h-4 w-4"} />
             <div>
-              <p className="font-medium text-m leading-tight">{modeInfo.message}</p>
-              <p className="text-m opacity-90 leading-tight">{modeInfo.description}</p>
+              <p className={`font-medium leading-tight ${isMobile ? 'text-sm' : 'text-base'}`}>{modeInfo.message}</p>
+              <p className={`opacity-90 leading-tight ${isMobile ? 'text-xs' : 'text-sm'}`}>{modeInfo.description}</p>
             </div>
           </div>
-          <div className="text-l font-medium">
+          <div className={isMobile ? "text-sm font-medium" : "text-base font-medium"}>
             <span className={`${
               content.length > 4500 ? 'text-red-600 font-bold' :
               content.length > 4000 ? 'text-orange-600 font-semibold' :
@@ -349,22 +351,23 @@ export function ContentEditor({ mode, targetId, onSuccess }: ContentEditorProps)
 
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <Label htmlFor="content" className="text-base font-semibold">
+          <Label htmlFor="content" className={`font-semibold ${isMobile ? 'text-sm' : 'text-base'}`}>
             {mode === "post" ? "Post content" : mode === "comment" ? "Comment" : "Your Quote"}
           </Label>
           <Button
             type="button"
             variant="outline"
-            size="sm"
+            size={isMobile ? "sm" : "default"}
             onClick={handleAIGenerate}
             disabled={isGenerating || !content || content.length <= 50}
+            className={isMobile ? "text-xs px-2 py-1" : ""}
           >
             {isGenerating ? (
               <>Generating...</>
             ) : (
               <>
-                <Wand2 className="w-4 h-4 mr-2" />
-                Generate {content?.length > 280 ? "Summaries" : "Headliner"} with AI
+                <Wand2 className={`${isMobile ? 'w-3 h-3 mr-1' : 'w-4 h-4 mr-2'}`} />
+                {isMobile ? "AI" : `Generate ${content?.length > 280 ? "Summaries" : "Headliner"} with AI`}
               </>
             )}
           </Button>
@@ -374,7 +377,7 @@ export function ContentEditor({ mode, targetId, onSuccess }: ContentEditorProps)
             value={mdValue}
             onChange={(val) => setMdValue(val || "")}
             preview="edit"
-            height={250}
+            height={isMobile ? 200 : 250}
             hideToolbar={false}
             visibleDragbar={false}
             className="focus-visible:ring-2 focus-visible:ring-offset-2"

@@ -199,7 +199,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
   const isFollowing = session?.user?.id ? profile.followers.some(follower => follower.id === session.user.id) : false
 
   return (
-    <div className="h-[calc(100vh-3.5rem)] w-full overflow-hidden px-4 py-8">
+    <div className="min-h-[calc(100vh-3.5rem)] w-full px-0 md:px-4 py-0 md:py-8">
       <ProfilePageClient 
         profile={profile}
         isCurrentUser={isCurrentUser}

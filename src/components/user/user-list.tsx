@@ -7,6 +7,7 @@ import type { UserWithProfile } from "@/lib/types"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
+import { useMobile } from "@/hooks/use-mobile"
 
 interface UserListProps {
   users: (UserWithProfile & { isFollowing: boolean })[]
@@ -22,6 +23,7 @@ interface UserListProps {
 export function UserList({ users, emptyMessage = "No users found", pagination, onPageChange }: UserListProps) {
   const { data: session } = useSession()
   const router = useRouter()
+  const isMobile = useMobile()
 
   const handleFollowToggle = async (userId: string, isFollowing: boolean) => {
     if (!session?.user) {
@@ -57,6 +59,82 @@ export function UserList({ users, emptyMessage = "No users found", pagination, o
     )
   }
 
+  if (isMobile) {
+    return (
+      <div className="space-y-6">
+        <div className="space-y-3">
+          {users.map((user) => (
+            <div key={user.id} className="flex items-center justify-between px-3 py-3 border rounded-lg bg-card">
+              <div className="flex items-center space-x-3 flex-grow min-w-0">
+                <Avatar className="h-12 w-12 flex-shrink-0">
+                  <AvatarImage src={user.image ?? undefined} />
+                  <AvatarFallback>{user.username?.[0]?.toUpperCase()}</AvatarFallback>
+                </Avatar>
+                <div className="flex-grow min-w-0">
+                  <Link href={`/profile/${user.id}`} className="block">
+                    <p className="font-medium text-sm truncate">{user.username}</p>
+                    <p className="text-xs text-muted-foreground truncate">@{user.handle}</p>
+                  </Link>
+                  <div className="flex gap-3 mt-1 text-xs text-muted-foreground">
+                    <span>{user._count.posts}</span>
+                    <span>{user._count.followers} followers</span>
+                  </div>
+                </div>
+              </div>
+              {session?.user && session.user.id !== user.id && (
+                <Button
+                  variant={user.isFollowing ? "outline" : "default"}
+                  size="sm"
+                  className="flex-shrink-0 ml-3 text-xs h-8 px-3"
+                  onClick={() => handleFollowToggle(user.id, user.isFollowing)}
+                >
+                  {user.isFollowing ? "Unfollow" : "Follow"}
+                </Button>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {pagination && pagination.pages > 1 && (
+          <div className="flex justify-center gap-2 flex-wrap px-4">
+            {Array.from({ length: Math.min(pagination.pages, 5) }, (_, i) => {
+              const page = pagination.currentPage <= 3 
+                ? i + 1 
+                : pagination.currentPage + i - 2
+              return page <= pagination.pages ? page : null
+            }).filter(Boolean).map((page) => (
+              <Button
+                key={page}
+                variant={page === pagination.currentPage ? "default" : "outline"}
+                size="sm"
+                className="h-8 w-8 p-0 text-xs"
+                onClick={() => onPageChange?.(page!)}
+              >
+                {page}
+              </Button>
+            ))}
+            {pagination.pages > 5 && pagination.currentPage < pagination.pages - 2 && (
+              <>
+                {pagination.currentPage < pagination.pages - 3 && (
+                  <span className="text-muted-foreground">...</span>
+                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 w-8 p-0 text-xs"
+                  onClick={() => onPageChange?.(pagination.pages)}
+                >
+                  {pagination.pages}
+                </Button>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // Desktop layout
   return (
     <div className="space-y-8">
       <div className="space-y-4">
