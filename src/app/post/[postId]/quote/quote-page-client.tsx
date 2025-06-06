@@ -13,6 +13,7 @@ import { useScrollState } from "@/hooks/use-scroll-state"
 import { useReadingMode } from "@/contexts/reading-mode-context"
 import { ReadingModeSwitcher } from "@/components/ui/reading-mode-switcher"
 import { ContentEditor } from "@/components/post/content-editor"
+import { useMobile } from "@/hooks/use-mobile"
 
 function PostSkeleton() {
   return (
@@ -37,12 +38,31 @@ export function QuotePageClient({ post }: QuotePageClientProps) {
   const { mode, setMode } = useReadingMode()
   const { data: session } = useSession()
   const scrollRef = useScrollState()
+  const isMobile = useMobile()
+
+  if (isMobile) {
+    return (
+      <div className="container mx-auto px-4 py-4">
+        <div className="max-w-2xl mx-auto">
+          <div className="mb-4">
+            <h2 className="text-xl font-bold mb-2">Quote Post</h2>
+            <div className="rounded-lg border mb-4">
+              <Suspense fallback={<PostSkeleton />}>
+                <PostCard post={post} mode={mode} isEmbedded />
+              </Suspense>
+            </div>
+            <ContentEditor mode="quote" targetId={post.id} />
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="container mx-auto">
-      <div className="grid h-full grid-cols-1 md:grid-cols-[250px_minmax(500px,_1fr)_250px] gap-6">
+      <div className="grid h-full grid-cols-[250px_minmax(500px,_1fr)_250px] gap-6">
         {/* Left Sidebar */}
-        <aside className="hidden md:block">
+        <aside>
           <Card>
             <CardContent className="p-4 space-y-2">
               <Button 
@@ -60,12 +80,7 @@ export function QuotePageClient({ post }: QuotePageClientProps) {
 
         {/* Main Content */}
         <main>
-          {/* Mobile Mode Switcher */}
-          <div className="md:hidden mb-6">
-            <ReadingModeSwitcher mode={mode} onChange={setMode} />
-          </div>
-
-          <div ref={scrollRef} className="md:h-[calc(100vh-8rem)] md:overflow-y-auto scrollbar-modern">
+          <div ref={scrollRef} className="h-[calc(100vh-8rem)] overflow-y-auto scrollbar-modern">
             <div className="mb-8">
               <h2 className="text-2xl font-bold mb-4">Quote Post</h2>
               <div className="rounded-lg border mb-8">
@@ -79,7 +94,7 @@ export function QuotePageClient({ post }: QuotePageClientProps) {
         </main>
 
         {/* Right Sidebar - Mode Switcher */}
-        <aside className="hidden md:block">
+        <aside>
           <ReadingModeSwitcher mode={mode} onChange={setMode} />
         </aside>
       </div>

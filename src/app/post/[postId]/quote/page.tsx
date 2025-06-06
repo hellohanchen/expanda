@@ -56,7 +56,7 @@ export default async function QuotePage({ params }: QuotePageProps) {
   const post = result.data as PostWithAuthor
 
   return (
-    <div className="h-[calc(100vh-3.5rem)] w-full overflow-hidden px-4 py-8">
+    <div className="min-h-[calc(100vh-3.5rem)] w-full px-0 md:px-4 py-0 md:py-8">
       <QuotePageClient post={post} />
     </div>
   )

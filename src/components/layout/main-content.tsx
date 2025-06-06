@@ -10,6 +10,8 @@ import { cn } from "@/lib/utils"
 import { useScrollState } from "@/hooks/use-scroll-state"
 import { useReadingMode } from "@/contexts/reading-mode-context"
 import { ReadingModeSwitcher } from "@/components/ui/reading-mode-switcher"
+import { MobileFeedSwitcher } from "@/components/post/mobile-feed-switcher"
+import { useMobile } from "@/hooks/use-mobile"
 import { useState } from "react"
 
 interface MainContentProps {
@@ -20,13 +22,36 @@ interface MainContentProps {
 export function MainContent({ userName }: MainContentProps) {
   const { mode, setMode } = useReadingMode()
   const scrollRef = useScrollState()
+  const isMobile = useMobile()
   const [feedType, setFeedType] = useState<'all' | 'following'>('all')
 
+  if (isMobile) {
+    return (
+      <div className="container mx-auto px-4">
+        {/* Mobile Single Column Layout */}
+        <div className="max-w-2xl mx-auto">
+          <div className={userName ? "pb-20" : "pb-10"}>
+            <PostsList mode={mode} feedType={feedType} />
+          </div>
+        </div>
+        
+        {/* Mobile Feed Switcher above footer */}
+        {userName && (
+          <MobileFeedSwitcher 
+            activeTab={feedType} 
+            onTabChange={setFeedType} 
+          />
+        )}
+      </div>
+    )
+  }
+
+  // Desktop layout (existing code)
   return (
     <div className="container mx-auto">
-      <div className="grid h-full grid-cols-1 md:grid-cols-[250px_minmax(500px,_1fr)_250px] gap-6">
+      <div className="grid h-full grid-cols-[250px_minmax(500px,_1fr)_250px] gap-6">
         {/* Left Sidebar */}
-        <aside className="hidden md:block">
+        <aside>
           <Card>
             <CardContent className="p-4 space-y-2">
               <Button 
@@ -57,18 +82,13 @@ export function MainContent({ userName }: MainContentProps) {
 
         {/* Main Content */}
         <main>
-          {/* Mobile Mode Switcher */}
-          <div className="md:hidden mb-6">
-            <ReadingModeSwitcher mode={mode} onChange={setMode} />
-          </div>
-
-          <div ref={scrollRef} className="md:h-[calc(100vh-8rem)] md:overflow-y-auto scrollbar-modern">
+          <div ref={scrollRef} className="h-[calc(100vh-8rem)] overflow-y-auto scrollbar-modern">
             <PostsList mode={mode} feedType={feedType} />
           </div>
         </main>
 
         {/* Right Sidebar - Mode Switcher */}
-        <aside className="hidden md:block">
+        <aside>
           <ReadingModeSwitcher mode={mode} onChange={setMode} />
         </aside>
       </div>

@@ -59,7 +59,7 @@ export default async function PostPage({ params }: PostPageProps) {
   const post = result.data as PostWithAuthor
 
   return (
-    <div className="h-[calc(100vh-3.5rem)] w-full overflow-hidden px-4 py-8">
+    <div className="min-h-[calc(100vh-3.5rem)] w-full px-0 md:px-4 py-0 md:py-8">
       <PostPageClient post={post} />
     </div>
   )
