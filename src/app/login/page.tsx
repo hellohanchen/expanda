@@ -124,7 +124,7 @@ export default function LoginPage() {
                   <div className="space-y-4 flex-1">
                     <h3 className="text-xl font-semibold">Sign In to Get Started</h3>
                     <p className="text-muted-foreground">
-                      Join our community by signing in with your Google account. It's quick, secure, and gets you started instantly.
+                      Join our community by signing in with your Google account. It&apos;s quick, secure, and gets you started instantly.
                     </p>
                     <div className="space-y-3">
                       <Button
